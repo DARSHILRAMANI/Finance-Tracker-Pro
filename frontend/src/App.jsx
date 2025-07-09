@@ -37,7 +37,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showAddGoal, setShowAddGoal] = useState(false);
-  const { user, token } = useContext(AuthContext);
+  const { user, token, backendUrl } = useContext(AuthContext);
 
   useEffect(() => {
     if (user && token) {
@@ -48,10 +48,10 @@ const App = () => {
           };
           const [transactionsRes, budgetsRes, goalsRes, notificationsRes] =
             await Promise.all([
-              axios.get("http://localhost:5000/api/transactions", config),
-              axios.get("http://localhost:5000/api/budgets", config),
-              axios.get("http://localhost:5000/api/goals", config),
-              axios.get("http://localhost:5000/api/notifications", config),
+              axios.get(`${backendUrl}/api/transactions`, config),
+              axios.get(`${backendUrl}/api/budgets`, config),
+              axios.get(`${backendUrl}/api/goals`, config),
+              axios.get(`${backendUrl}/api/notifications`, config),
             ]);
 
           setTransactions(transactionsRes.data);
