@@ -605,15 +605,6 @@ const verifyOtp = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const storedData = otpStore.get(cleanEmail);
 
-    const user = await User.findOne({ email: cleanEmail });
-
-    if (user) {
-      return res.status(400).json({
-        success: false,
-        message: "already register email please login",
-      });
-    }
-
     if (!storedData) {
       return res.status(400).json({
         success: false,

@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-toastify"; // Import toast for notifications
+import { toast } from "react-toastify";
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(1); // 1: email, 2: otp, 3: new password
@@ -15,8 +15,6 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { backendUrl } = useContext(AuthContext);
-  // API base URL
-  const API_URL = backendUrl;
 
   // Step 1: Send OTP to email
   const handleSendOtp = async (e) => {
@@ -26,22 +24,23 @@ const ForgotPassword = () => {
     setSuccess("");
 
     try {
-      const response = await axios.post(`${API_URL}/forgot-password`, {
-        email: email,
-      });
+      const response = await axios.post(
+        `${backendUrl}/api/auth/forgot-password`,
+        {
+          email: email,
+        }
+      );
 
       if (response.data.success) {
-        toast.success("OTP sent to your email address"); // Use toast for success notification
+        toast.success("OTP sent to your email address");
         setSuccess("OTP sent to your email address");
         setStep(2);
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to send OTP. Please try again."
-      );
-      setError(
-        err.response?.data?.message || "Failed to send OTP. Please try again."
-      );
+      const errorMessage =
+        err.response?.data?.message || "Failed to send OTP. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -55,21 +54,21 @@ const ForgotPassword = () => {
     setSuccess("");
 
     try {
-      const response = await axios.post(`${API_URL}/verify-otp`, {
+      const response = await axios.post(`${backendUrl}/api/auth/verify-otp`, {
         email: email,
         otp: otp,
       });
 
       if (response.data.success) {
-        toast.success("OTP verified successfully"); // Use toast for success notification
+        toast.success("OTP verified successfully");
         setSuccess("OTP verified successfully");
         setStep(3);
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Invalid OTP. Please try again."
-      );
-      setError(err.response?.data?.message || "Invalid OTP. Please try again.");
+      const errorMessage =
+        err.response?.data?.message || "Invalid OTP. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,51 +81,57 @@ const ForgotPassword = () => {
     setError("");
     setSuccess("");
 
+    // Validation
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      const errorMessage = "Passwords do not match";
+      setError(errorMessage);
+      toast.error(errorMessage);
       setLoading(false);
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long");
+      const errorMessage = "Password must be at least 6 characters long";
+      setError(errorMessage);
+      toast.error(errorMessage);
       setLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post(`${API_URL}/reset-password`, {
-        email: email,
-        otp: otp,
-        newPassword: newPassword,
-      });
+      const response = await axios.post(
+        `${backendUrl}/api/auth/reset-password`,
+        {
+          email: email,
+          otp: otp,
+          newPassword: newPassword,
+        }
+      );
 
       if (response.data.success) {
         toast.success(
           "Password reset successfully! You can now login with your new password."
         );
 
-        // Reset form after successful password reset
+        // Navigate to login page
         navigate("/login");
+        window.location.reload();
 
-        setTimeout(() => {
-          setStep(1);
-          setEmail("");
-          setOtp("");
-          setNewPassword("");
-          setConfirmPassword("");
-          setSuccess("");
-        }, 3000);
+        // Reset form state
+        setStep(1);
+        setEmail("");
+        setOtp("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setSuccess("");
+        setError("");
       }
     } catch (err) {
-      toast.error(
+      const errorMessage =
         err.response?.data?.message ||
-          "Failed to reset password. Please try again."
-      );
-      setError(
-        err.response?.data?.message ||
-          "Failed to reset password. Please try again."
-      );
+        "Failed to reset password. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -139,30 +144,35 @@ const ForgotPassword = () => {
     setSuccess("");
 
     try {
-      const response = await axios.post(`${API_URL}/resend-otp`, {
+      const response = await axios.post(`${backendUrl}/api/auth/resend-otp`, {
         email: email,
       });
 
       if (response.data.success) {
-        toast.success("New OTP sent to your email address"); // Use toast for success notification
+        toast.success("New OTP sent to your email address");
         setSuccess("New OTP sent to your email address");
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to resend OTP. Please try again."
-      );
-      setError(
-        err.response?.data?.message || "Failed to resend OTP. Please try again."
-      );
+      const errorMessage =
+        err.response?.data?.message ||
+        "Failed to resend OTP. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const goBack = () => {
-    setStep(step - 1);
-    setError("");
-    setSuccess("");
+    if (step > 1) {
+      setStep(step - 1);
+      setError("");
+      setSuccess("");
+    }
+  };
+
+  const handleLoginRedirect = () => {
+    navigate("/login");
   };
 
   return (
@@ -284,6 +294,7 @@ const ForgotPassword = () => {
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all duration-200"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <svg
@@ -324,11 +335,12 @@ const ForgotPassword = () => {
                   <input
                     type="text"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all duration-200 text-center text-2xl font-mono tracking-widest"
                     placeholder="000000"
                     maxLength="6"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -338,7 +350,7 @@ const ForgotPassword = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || otp.length !== 6}
                 className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 text-white py-2.5 px-6 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Verifying..." : "Verify OTP"}
@@ -348,7 +360,8 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   onClick={goBack}
-                  className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                  disabled={loading}
+                  className="text-sm text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
                 >
                   ← Back
                 </button>
@@ -379,6 +392,8 @@ const ForgotPassword = () => {
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all duration-200"
                     placeholder="Enter new password"
                     required
+                    disabled={loading}
+                    minLength={6}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <svg
@@ -391,13 +406,7 @@ const ForgotPassword = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                       />
                     </svg>
                   </div>
@@ -416,6 +425,8 @@ const ForgotPassword = () => {
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all duration-200"
                     placeholder="Confirm new password"
                     required
+                    disabled={loading}
+                    minLength={6}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <svg
@@ -428,13 +439,7 @@ const ForgotPassword = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                       />
                     </svg>
                   </div>
@@ -443,7 +448,11 @@ const ForgotPassword = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={
+                  loading ||
+                  newPassword !== confirmPassword ||
+                  newPassword.length < 6
+                }
                 className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 text-white py-2.5 px-6 rounded-lg font-semibold hover:from-emerald-700 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Resetting Password..." : "Reset Password"}
@@ -453,7 +462,8 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   onClick={goBack}
-                  className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                  disabled={loading}
+                  className="text-sm text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
                 >
                   ← Back
                 </button>
@@ -465,12 +475,12 @@ const ForgotPassword = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Remember your password?{" "}
-              <a
-                href="/login"
+              <button
+                onClick={handleLoginRedirect}
                 className="text-emerald-600 hover:text-emerald-700 font-semibold"
               >
                 Back to Login
-              </a>
+              </button>
             </p>
           </div>
         </div>
