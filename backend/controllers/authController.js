@@ -317,9 +317,7 @@ const register = async (req, res, next) => {
     await user.save();
 
     // Generate JWT token
-    const token = jwt.sign({ user: { id: user._id } }, process.env.JWT_SECRET, {
-      expiresIn: "3h",
-    });
+    const token = jwt.sign({ user: { id: user._id } }, process.env.JWT_SECRET);
 
     // Remove password from response
     const userResponse = user.toObject();
