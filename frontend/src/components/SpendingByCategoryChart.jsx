@@ -175,7 +175,7 @@ import {
   Legend,
 } from "recharts";
 
-const SpendingByCategoryDonutChart = ({ categoryData }) => {
+const SpendingByCategoryChart = ({ categoryData }) => {
   const [focusedCategory, setFocusedCategory] = useState(null);
 
   const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
